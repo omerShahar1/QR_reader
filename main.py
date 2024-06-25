@@ -6,33 +6,31 @@ import math
 # Initialize video capture
 cap = cv2.VideoCapture('challengeB.mp4')
 
-# QR code detector
-detector = cv2.QRCodeDetector()
-
+# Load ArUco dictionary and parameters
+aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
+aruco_params = cv2.aruco.DetectorParameters()
 # Output CSV file
-csv_file = open('qr_codes_data.csv', mode='w', newline='')
+csv_file = open('aruco_markers_data.csv', mode='w', newline='')
 csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['Frame ID', 'QR ID', 'QR 2D', 'QR 3D'])
+csv_writer.writerow(['Frame ID', 'Aruco ID', 'Aruco 2D', 'Aruco 3D'])
 
 frame_id = 0
 
-
-def calculate_3d_info(points, frame_width, frame_height):
+def calculate_3d_info(corners, frame_width, frame_height, marker_size=0.1):
     # Assuming the camera parameters for calculating the distance and yaw
     # These values are just for the sake of example, you need to calibrate your camera to get real values
     focal_length = 700  # Focal length in pixels
-    real_qr_size = 0.1  # Real size of QR code in meters
+    real_marker_size = marker_size  # Real size of ArUco marker in meters
 
     # Calculate the distance to the camera
-    qr_width = np.linalg.norm(points[0] - points[1])
-    distance = (real_qr_size * focal_length) / qr_width
+    marker_width = np.linalg.norm(corners[0] - corners[1])
+    distance = (real_marker_size * focal_length) / marker_width
 
     # Calculate yaw angle with respect to the camera
-    center_point = np.mean(points, axis=0)
+    center_point = np.mean(corners, axis=0)
     yaw = math.degrees(math.atan2(center_point[0] - frame_width / 2, focal_length))
 
     return distance, yaw
-
 
 while cap.isOpened():
     ret, frame = cap.read()
@@ -42,34 +40,32 @@ while cap.isOpened():
     frame_id += 1
     frame_height, frame_width = frame.shape[:2]
 
-    # Detect QR codes
-    retval, points = detector.detectMulti(frame)
+    # Detect ArUco markers
+    corners, ids, _ = cv2.aruco.detectMarkers(frame, aruco_dict, parameters=aruco_params)
 
-    if retval:
-        points = points.astype(int)
-        for i, point in enumerate(points):
-            # Decode QR code
-            point_reshaped = point.reshape(4, 2)
-            data, bbox, rectified_image = detector.detectAndDecode(frame)
-            if data:
-                qr_id = i % 1024  # Generate a QR ID for demonstration purposes
+    if ids is not None:
+        ids = ids.flatten()
+        for i, corner in zip(ids, corners):
+            corner = corner.reshape((4, 2))
+            aruco_id = i % 1024  # Generate an ArUco ID for demonstration purposes
 
-                # Calculate 3D information
-                distance, yaw = calculate_3d_info(point_reshaped, frame_width, frame_height)
+            # Calculate 3D information
+            distance, yaw = calculate_3d_info(corner, frame_width, frame_height)
 
-                # Write to CSV
-                csv_writer.writerow([
-                    frame_id,
-                    qr_id,
-                    point_reshaped.tolist(),
-                    [distance, yaw]
-                ])
+            # Write to CSV
+            csv_writer.writerow([
+                frame_id,
+                aruco_id,
+                corner.tolist(),
+                [distance, yaw]
+            ])
 
-                # Draw the QR code bounding box and ID on the frame
-                for j in range(4):
-                    cv2.line(frame, tuple(point_reshaped[j]), tuple(point_reshaped[(j + 1) % 4]), (0, 255, 0), 2)
-                cv2.putText(frame, f"ID: {qr_id}", tuple(point_reshaped[0]), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0),
-                            2)
+            # Draw the ArUco marker bounding box and ID on the frame
+            for j in range(4):
+                pt1 = (int(corner[j][0]), int(corner[j][1]))
+                pt2 = (int(corner[(j + 1) % 4][0]), int(corner[(j + 1) % 4][1]))
+                cv2.line(frame, pt1, pt2, (0, 255, 0), 2)
+            cv2.putText(frame, f"ID: {aruco_id}", (int(corner[0][0]), int(corner[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
     # Display the frame
     cv2.imshow('Frame', frame)
