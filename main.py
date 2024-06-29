@@ -3,6 +3,7 @@ import csv
 import numpy as np
 import math
 
+video_path = 'aruco_markers_data.csv'
 # Initialize video capture
 cap = cv2.VideoCapture('challengeB.mp4')
 
@@ -10,7 +11,7 @@ cap = cv2.VideoCapture('challengeB.mp4')
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
 aruco_params = cv2.aruco.DetectorParameters()
 # Output CSV file
-csv_file = open('aruco_markers_data.csv', mode='w', newline='')
+csv_file = open(video_path, mode='w', newline='')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['Frame ID', 'Aruco ID', 'Aruco 2D', 'Aruco 3D'])
 
