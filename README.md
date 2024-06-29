@@ -3,7 +3,7 @@ Place your input video in the project directory: Update the video_path variable 
 
 # Run the script:
 ```bash
-python Aruco_PartA.py
+python main.py
 ```
 
 
