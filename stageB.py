@@ -62,7 +62,7 @@ def generate_movement_commands(ref_center, cur_center, ref_size, cur_size, ref_a
 
 
 # Load the reference frame and detect the ArUco marker
-ref_frame_path = 'C:\\New folder\\frame.png'
+ref_frame_path = 'C:\\New folder\\frame.jpg'
 print(f"Attempting to load image from: {ref_frame_path}")
 
 if not os.path.isfile(ref_frame_path):
